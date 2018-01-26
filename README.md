@@ -1,3 +1,3 @@
-# lara-CRUD
+# lara-Service
 
-Create, Update, Delete, Show actions 
+Service layer for CRUD
