@@ -1,15 +1,15 @@
 <?php
+
 namespace LaraService\Services;
 
 use LaraRepo\Contracts\RepositoryInterface;
 use LaraRepo\Criteria\Order\SortCriteria;
-use LaraRepo\Criteria\Search\SearchCriteria;
 use LaraRepo\Criteria\Where\WhereCriteria;
-use LaraCrud\Repository\Contract\LaraRepositoryInterface;
-use Illuminate\Support\Facades\Input;
 
 class LaraService
 {
+    const GROUP = 'list';
+
     /**
      * @var
      */
@@ -57,6 +57,7 @@ class LaraService
     {
         return $this->baseValidator;
     }
+
     /**
      * @param $errors
      */
@@ -78,7 +79,7 @@ class LaraService
      * @param string $group
      * @return array
      */
-    public function paginate($sort = [], $group = 'list')
+    public function paginate($sort = [], $group = self::GROUP)
     {
         if (!empty($sort)) {
             $this->baseRepository->pushCriteria(new SortCriteria($sort));
@@ -104,11 +105,8 @@ class LaraService
     public function createWithRelations($data, $relations = '')
     {
         if ($this->validate($this->baseValidator, $data)) {
-
-            $relations = $this->getRelationForSaveAssociated($relations );
-
+            $relations = $this->getRelationForSaveAssociated($relations);
             return $this->baseRepository->saveAssociated($data, $relations);
-
         }
 
         return false;
@@ -152,8 +150,15 @@ class LaraService
     public function updateWithRelations($id, $data, $relations = '')
     {
         $data[$this->baseRepository->getKeyName()] = $id;
+
         if ($this->validate($this->baseValidator, $data)) {
             $model = $this->baseRepository->findFillable($id);
+
+            if (empty($model)) {
+                //TODO return false or throw exception
+                return false;
+            }
+
             $relations = $this->getRelationForSaveAssociated($relations);
             return $this->baseRepository->saveAssociated($data, $relations, $model);
         }
@@ -169,16 +174,6 @@ class LaraService
     {
         return $this->baseRepository->destroy($id);
     }
-
-    /**
-     * @param $id
-     * @return mixed
-     */
-    public function delete($id)
-    {
-        return $this->destroy($id);
-    }
-
 
     /**
      * @param $validator
@@ -197,25 +192,27 @@ class LaraService
     }
 
     /**
-     * @param LaraRepositoryInterface $repository
+     * @param $repository
      * @param string $group
      * @param null $column
      * @param null $val
      * @return array
      */
-    protected function paginateRepositoryWhere(LaraRepositoryInterface $repository, $group = \ConstIndexableGroup::_List, $column = null, $val = null) {
+    public function paginateRepositoryWhere($repository, $group = self::GROUP, $column = null, $val = null)
+    {
         if (!empty($column) && !empty($val)) {
             $repository->pushCriteria(new WhereCriteria($column, $val, '='));
         }
+
         return $this->paginateRepository($repository, $group);
     }
 
     /**
-     * @param RepositoryInterface $repository
+     * @param $repository
      * @param string $group
      * @return array
      */
-    protected function paginateRepository(RepositoryInterface $repository, $group = 'list')
+    public function paginateRepository($repository, $group = 'list')
     {
         $columns = $repository->getIndexableColumns(true, false, $group);
         $this->setSortingOptions($repository, [], $group);
@@ -228,14 +225,13 @@ class LaraService
     }
 
     /**
-     * @param LaraRepositoryInterface $repository
+     * @param $repository
      * @param array $options
-     * @param string $group
+     * @param $group
      */
-    protected function setSortingOptions(RepositoryInterface $repository, $options = [], $group = \ConstIndexableGroup::_List)
+    public function setSortingOptions($repository, $options = [], $group = self::GROUP)
     {
         if (empty($options)) {
-            // @TODO - request data in service ????
             $options = app('request')->request->all();
         }
 
@@ -261,20 +257,5 @@ class LaraService
 
         return [];
     }
-//
-//    /**
-//     * @param $name
-//     * @param $arguments
-//     * @return mixed
-//     * @throws \Exception
-//     */
-//    public function __call($name, $arguments)
-//    {
-//        if (method_exists($this->baseRepository, $name)) {
-//            return $this->baseRepository->{$name}(...$arguments);
-//        } else {
-//            throw new \Exception(sprintf('This %s method does not exist in %s class', $name, get_class($this)));
-//        }
-//    }
 
 }
