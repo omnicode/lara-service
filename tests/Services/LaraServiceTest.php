@@ -1,18 +1,19 @@
 <?php
 
-namespace Tests;
+namespace Test\Services;
 
-use LaraService\Services\LaraService;
 use LaraRepo\Contracts\RepositoryInterface;
 use LaraRepo\Criteria\Where\WhereCriteria;
+use LaraService\Services\LaraService;
 use LaraTest\Traits\AccessProtectedTraits;
+use LaraTest\Traits\AssertionTraits;
 use LaraTest\Traits\MockTraits;
 use LaraValidation\LaraValidator;
 use phpmock\MockBuilder;
 
 class LaraServiceTest extends \TestCase
 {
-    use MockTraits, AccessProtectedTraits;
+    use MockTraits, AccessProtectedTraits, AssertionTraits;
 
     /**
      * @var
@@ -35,7 +36,6 @@ class LaraServiceTest extends \TestCase
     public function setUp()
     {
         parent::setUp();
-        $this->validator = $this->getMockValidator(LaraValidator::class, ['isValid', 'getErrors']);
         $this->repository = $this->getMockForAbstractClass(
             RepositoryInterface::class,
             [],
@@ -45,6 +45,8 @@ class LaraServiceTest extends \TestCase
             true,
             ['pushCriteria']
         );
+
+        $this->validator = $this->getMockValidator(LaraValidator::class, ['isValid', 'getErrors']);
         $this->service = $this->getMockLaraService(['validate', 'getRelationForSaveAssociated']);
         $this->service->setBaseRepository($this->repository);
         $this->service->setBaseValidator($this->validator);
@@ -92,6 +94,7 @@ class LaraServiceTest extends \TestCase
     public function testSetValidationErrors()
     {
         $error = 'error';
+
         $this->service->setValidationErrors($error);
         $this->assertEquals($error, $this->service->getValidationErrors());
     }
@@ -111,8 +114,8 @@ class LaraServiceTest extends \TestCase
     public function testPaginateWhenSortIsNotEmpty()
     {
         $sort = ['id' => 'asc'];
-        $this->methodWillThrowException('pushCriteria', $this->repository);
-        $this->expectException(\Exception::class);
+
+        $this->expectCallMethod($this->repository, 'pushCriteria');
         $this->service->paginate($sort);
     }
 
@@ -149,13 +152,13 @@ class LaraServiceTest extends \TestCase
      */
     public function testCreateWithRelationsWhenValidateIsTrue()
     {
-        $this->methodWillReturnTrue('validate', $this->service);
-        $this->methodWillReturnArguments('getRelationForSaveAssociated', $this->service);
-        $this->methodWillReturnArguments('saveAssociated', $this->repository);
-
         $relations = ['associated' => 'categories'];
         $data = ['id' => 12];
         $expected = [$data, [$relations], null];
+
+        $this->methodWillReturnTrue('validate', $this->service);
+        $this->methodWillReturnArguments('getRelationForSaveAssociated', $this->service);
+        $this->methodWillReturnArguments('saveAssociated', $this->repository);
         $this->assertEquals($expected, $this->service->createWithRelations($data, $relations));
     }
 
@@ -211,12 +214,6 @@ class LaraServiceTest extends \TestCase
      */
     public function testUpdateWithRelationsWhenValidateIsTrue_WhenFindFillableIsTrue()
     {
-        $this->methodWillReturn('id', 'getKeyName', $this->repository);
-        $this->methodWillReturnTrue('validate', $this->service);
-        $this->methodWillReturnArguments('findFillable', $this->repository);
-        $this->methodWillReturnArguments('saveAssociated', $this->repository);
-        $this->methodWillReturnArguments('getRelationForSaveAssociated', $this->service);
-
         $id = 1;
         $data = ['name' => 'name'];
         $relations = ['associated' => 'categories'];
@@ -225,6 +222,13 @@ class LaraServiceTest extends \TestCase
             [$relations],
             [$id]
         ];
+
+        $this->methodWillReturn('id', 'getKeyName', $this->repository);
+        $this->methodWillReturnTrue('validate', $this->service);
+        $this->methodWillReturnArguments('findFillable', $this->repository);
+        $this->methodWillReturnArguments('saveAssociated', $this->repository);
+        $this->methodWillReturnArguments('getRelationForSaveAssociated', $this->service);
+
         $this->assertEquals($expected, $this->service->updateWithRelations(1, $data, $relations));
     }
 
@@ -244,6 +248,7 @@ class LaraServiceTest extends \TestCase
     {
         $service = new LaraService();
         $this->methodWillReturnTrue('getErrors', $this->validator);
+
         $this->assertFalse($service->validate($this->validator, []));
         $this->assertTrue($service->getValidationErrors());
     }
@@ -263,13 +268,11 @@ class LaraServiceTest extends \TestCase
      */
     public function testPaginateRepositoryWhere_WhenIsNotEmpty_Column_Val()
     {
-        $service = $this->getMockLaraService(['paginateRepository']);
-        $this->methodWillThrowExceptionWithArgument('pushCriteria', $this->repository);
-
         $attribute = 'name';
         $value = 'value';
-        $message = $this->getExceptionArgumentsMessage([new WhereCriteria($attribute, $value)]);
-        $this->expectExceptionMessage($message);
+
+        $service = $this->getMockLaraService(['paginateRepository']);
+        $this->expectCallMethodWithArgument($this->repository, 'pushCriteria', [new WhereCriteria($attribute, $value)]);
         $service->paginateRepositoryWhere($this->repository, 'list', $attribute, $value);
     }
 
@@ -278,10 +281,11 @@ class LaraServiceTest extends \TestCase
      */
     public function testPaginateRepositoryWhere_WhenIsNotEmpty_Column_Val_CheckReturn()
     {
-        $service = $this->getMockLaraService(['paginateRepository']);
-        $this->methodWillReturnTrue('paginateRepository', $service);
         $attribute = 'name';
         $value = 'value';
+
+        $service = $this->getMockLaraService(['paginateRepository']);
+        $this->methodWillReturnTrue('paginateRepository', $service);
         $this->assertTrue($service->paginateRepositoryWhere($this->repository, 'list', $attribute, $value));
     }
 
@@ -300,9 +304,6 @@ class LaraServiceTest extends \TestCase
      */
     public function testPaginateRepository()
     {
-        $this->methodWillReturnArguments('getIndexableColumns', $this->repository);
-        $this->methodWillReturnArguments('paginate', $this->repository);
-
        $expected = [
            [
                20,
@@ -316,7 +317,9 @@ class LaraServiceTest extends \TestCase
            ],
        ];
 
-       $this->assertEquals($expected, $this->service->paginateRepository($this->repository));
+        $this->methodWillReturnArguments('getIndexableColumns', $this->repository);
+        $this->methodWillReturnArguments('paginate', $this->repository);
+        $this->assertEquals($expected, $this->service->paginateRepository($this->repository));
     }
 
     /**
@@ -325,9 +328,7 @@ class LaraServiceTest extends \TestCase
     public function testPaginateRepositorySetSortingOptions()
     {
         $service = $this->getMockLaraService(['setSortingOptions']);
-        $this->methodWillThrowExceptionWithArgument('setSortingOptions', $service);
-        $message = $this->getExceptionArgumentsMessage([$this->repository, [], 'list']);
-        $this->expectExceptionMessage($message);
+        $this->expectCallMethodWithArgument($service, 'setSortingOptions', [$this->repository, [], 'list']);
         $service->paginateRepositoryWhere($this->repository, 'list');
     }
 
@@ -336,15 +337,14 @@ class LaraServiceTest extends \TestCase
      */
     public function testSetSortingOptionsWhenOptionsIsEmpty()
     {
-        $mock = new MockBuilder();
-        $mock->setNamespace('LaraService\Services');
-        $mock->setName('app');
-
         $options = [
             'column' => 'column',
             'order' => 'order'
         ];
 
+        $mock = new MockBuilder();
+        $mock->setNamespace('LaraService\Services');
+        $mock->setName('app');
         $mock->setFunction(
             function () use ($options) {
                 $request = $this->getMockBuilder(\stdClass::class)->setMethods(['all'])->getMock();
@@ -359,9 +359,7 @@ class LaraServiceTest extends \TestCase
         $mock->enable();
 
         $service = new LaraService();
-        $this->methodWillThrowExceptionWithArgument('setSortingOptions', $this->repository);
-        $message =$this->getExceptionArgumentsMessage([$options['column'], $options['order'], 'list']);
-        $this->expectExceptionMessage($message);
+        $this->expectCallMethodWithArgument($this->repository, 'setSortingOptions', [$options['column'], $options['order'], 'list']);
         $this->invokeMethod($service, 'setSortingOptions', [$this->repository]);
     }
 
@@ -370,11 +368,12 @@ class LaraServiceTest extends \TestCase
      */
     public function testSetSortingOptionsWhenOptionsHasNotKeysColumnOrOrder()
     {
-        $service = new LaraService();
         $options = [
             'column' => 'column',
             'order' => 'order'
         ];
+
+        $service = new LaraService();
         $this->assertNull($this->invokeMethod($service, 'setSortingOptions', [$this->repository, $options]));
     }
 
@@ -383,14 +382,13 @@ class LaraServiceTest extends \TestCase
      */
     public function testSetSortingOptionsWhenOptionsIsNotEmpty()
     {
-        $service = new LaraService();
-        $this->methodWillThrowExceptionWithArgument('setSortingOptions', $this->repository);
         $options = [
             'column' => 'column',
             'order' => 'order'
         ];
-        $message =$this->getExceptionArgumentsMessage([$options['column'], $options['order'], 'list']);
-        $this->expectExceptionMessage($message);
+
+        $service = new LaraService();
+        $this->expectCallMethodWithArgument($this->repository, 'setSortingOptions', [$options['column'], $options['order'], 'list']);
         $this->invokeMethod($service, 'setSortingOptions', [$this->repository, $options]);
     }
 
@@ -399,9 +397,10 @@ class LaraServiceTest extends \TestCase
      */
     public function testGetRelationForSaveAssociated_WhenDataIsString()
     {
-        $service = new LaraService();
         $data = 'some-string';
         $expected = ['associated' => [$data]];
+
+        $service = new LaraService();
         $this->assertEquals($expected, $this->invokeMethod($service, 'getRelationForSaveAssociated', [$data]));
     }
 
@@ -410,9 +409,10 @@ class LaraServiceTest extends \TestCase
      */
     public function testGetRelationForSaveAssociated_WhenDataIaArray()
     {
-        $service = new LaraService();
         $data = ['some-string'];
         $expected = ['associated' => $data];
+
+        $service = new LaraService();
         $this->assertEquals($expected, $this->invokeMethod($service, 'getRelationForSaveAssociated', [$data]));
     }
 
@@ -421,8 +421,9 @@ class LaraServiceTest extends \TestCase
      */
     public function testGetRelationForSaveAssociated_WhenDataIsEmpty()
     {
-        $service = new LaraService();
         $data = [];
+
+        $service = new LaraService();
         $this->assertEquals([], $this->invokeMethod($service, 'getRelationForSaveAssociated', [$data]));
     }
 
@@ -440,5 +441,4 @@ class LaraServiceTest extends \TestCase
         $service->setBaseValidator($this->validator);
         return $service;
     }
-
 }

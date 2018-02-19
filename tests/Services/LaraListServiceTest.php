@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests;
+namespace Tests\Services;
 
 use Illuminate\Support\Facades\App;
 use LaraRepo\Contracts\RepositoryInterface;
@@ -57,12 +57,14 @@ class LaraListServiceTest extends \TestCase
      */
     public function testFindListBased()
     {
-        $service = new LaraListService();
         $repository = 'Repository';
+
+        $service = new LaraListService();
         $object = $this->getMockObjectWithMockedMethods(['findList']);
         $this->methodWillReturnTrue('findList', $object);
         App::shouldReceive('make')->withArgs([$repository])->andReturn($object);
-        $this->assertTrue($this->invokeMethod($service, 'findListBased', ['Repository']));
+
+        $this->assertTrue($this->invokeMethod($service, 'findListBased', [$repository]));
     }
 
 }
