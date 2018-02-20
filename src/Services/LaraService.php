@@ -8,6 +8,8 @@ use LaraRepo\Criteria\Where\WhereCriteria;
 
 class LaraService
 {
+    const GROUP = 'list';
+
     /**
      * @var
      */
@@ -77,7 +79,7 @@ class LaraService
      * @param string $group
      * @return array
      */
-    public function paginate($sort = [], $group = RepositoryInterface::GROUP)
+    public function paginate($sort = [], $group = self::GROUP)
     {
         if (!empty($sort)) {
             $this->baseRepository->pushCriteria(new SortCriteria($sort));
@@ -86,7 +88,7 @@ class LaraService
         return $this->paginateRepository($this->baseRepository, $group);
     }
 
-        /**
+    /**
      * @param $data
      * @return bool
      */
@@ -196,7 +198,7 @@ class LaraService
      * @param null $val
      * @return array
      */
-    public function paginateRepositoryWhere($repository, $group = RepositoryInterface::GROUP, $column = null, $val = null)
+    public function paginateRepositoryWhere($repository, $group = self::GROUP, $column = null, $val = null)
     {
         if (!empty($column) && !empty($val)) {
             $repository->pushCriteria(new WhereCriteria($column, $val, '='));
@@ -210,7 +212,7 @@ class LaraService
      * @param string $group
      * @return array
      */
-    public function paginateRepository($repository, $group = RepositoryInterface::GROUP)
+    public function paginateRepository($repository, $group = self::GROUP)
     {
         $columns = $repository->getIndexableColumns(true, false, $group);
         $this->setSortingOptions($repository, [], $group);
