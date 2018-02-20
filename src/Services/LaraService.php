@@ -8,8 +8,6 @@ use LaraRepo\Criteria\Where\WhereCriteria;
 
 class LaraService
 {
-    const GROUP = 'list';
-
     /**
      * @var
      */
@@ -79,7 +77,7 @@ class LaraService
      * @param string $group
      * @return array
      */
-    public function paginate($sort = [], $group = self::GROUP)
+    public function paginate($sort = [], $group = RepositoryInterface::GROUP)
     {
         if (!empty($sort)) {
             $this->baseRepository->pushCriteria(new SortCriteria($sort));
@@ -99,10 +97,10 @@ class LaraService
 
     /**
      * @param $data
-     * @param string $relations
+     * @param null $relations
      * @return bool
      */
-    public function createWithRelations($data, $relations = '')
+    public function createWithRelations($data, $relations = null)
     {
         if ($this->validate($this->baseValidator, $data)) {
             $relations = $this->getRelationForSaveAssociated($relations);
@@ -113,11 +111,11 @@ class LaraService
     }
 
     /**
-    * @param $id
-    * @param array $columns
-    * @return mixed
-    */
-    public function findForShow($id, $columns = [])
+     * @param $id
+     * @param null $columns
+     * @return mixed
+     */
+    public function findForShow($id, $columns = null)
     {
         return $this->baseRepository->findForShow($id, $columns);
     }
@@ -144,10 +142,10 @@ class LaraService
     /**
      * @param $id
      * @param $data
-     * @param string $relations
+     * @param null $relations
      * @return bool
      */
-    public function updateWithRelations($id, $data, $relations = '')
+    public function updateWithRelations($id, $data, $relations = null)
     {
         $data[$this->baseRepository->getKeyName()] = $id;
 
@@ -198,7 +196,7 @@ class LaraService
      * @param null $val
      * @return array
      */
-    public function paginateRepositoryWhere($repository, $group = self::GROUP, $column = null, $val = null)
+    public function paginateRepositoryWhere($repository, $group = RepositoryInterface::GROUP, $column = null, $val = null)
     {
         if (!empty($column) && !empty($val)) {
             $repository->pushCriteria(new WhereCriteria($column, $val, '='));
@@ -212,11 +210,11 @@ class LaraService
      * @param string $group
      * @return array
      */
-    public function paginateRepository($repository, $group = 'list')
+    public function paginateRepository($repository, $group = RepositoryInterface::GROUP)
     {
         $columns = $repository->getIndexableColumns(true, false, $group);
         $this->setSortingOptions($repository, [], $group);
-        $items = $repository->paginate(20, [], $group);
+        $items = $repository->paginate(20, null, $group);
 
         return [
             $items,
