@@ -88,7 +88,7 @@ class LaraService
         return $this->paginateRepository($this->baseRepository, $group);
     }
 
-    /**
+        /**
      * @param $data
      * @return bool
      */

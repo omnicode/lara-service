@@ -10,8 +10,9 @@ use LaraTest\Traits\AssertionTraits;
 use LaraTest\Traits\MockTraits;
 use LaraValidation\LaraValidator;
 use phpmock\MockBuilder;
+use Tests\TestCase;
 
-class LaraServiceTest extends \TestCase
+class LaraServiceTest extends TestCase
 {
     use MockTraits, AccessProtectedTraits, AssertionTraits;
 
@@ -36,16 +37,11 @@ class LaraServiceTest extends \TestCase
     public function setUp()
     {
         parent::setUp();
-        $this->repository = $this->getMockForAbstractClass(
+        $this->repository = $this->getMockForAbstract(
             RepositoryInterface::class,
             [],
-            '',
-            true,
-            true,
-            true,
             ['pushCriteria']
         );
-
         $this->validator = $this->getMockValidator(LaraValidator::class, ['isValid', 'getErrors']);
         $this->service = $this->getMockLaraService(['validate', 'getRelationForSaveAssociated']);
         $this->service->setBaseRepository($this->repository);
@@ -106,6 +102,7 @@ class LaraServiceTest extends \TestCase
     {
         $error = 'error';
         $this->service->setValidationErrors($error);
+        $this->assertEquals($error, $this->service->getValidationErrors());
     }
 
     /**
@@ -125,7 +122,7 @@ class LaraServiceTest extends \TestCase
     public function testPaginateWhenSortIsEmpty()
     {
         $service = $this->getMockLaraService(['paginateRepository']);
-        $this->methodWillReturnTrue('paginateRepository', $service);
+        $this->methodWillReturnTrue($service, 'paginateRepository');
         $this->assertTrue($service->paginate());
     }
 
@@ -135,7 +132,7 @@ class LaraServiceTest extends \TestCase
     public function testCreate()
     {
         $service = $this->getMockLaraService(['createWithRelations']);
-        $this->methodWillReturnTrue('createWithRelations', $service);
+        $this->methodWillReturnTrue($service, 'createWithRelations');
         $this->assertTrue($service->create([]));
     }
 
@@ -154,12 +151,11 @@ class LaraServiceTest extends \TestCase
     {
         $relations = ['associated' => 'categories'];
         $data = ['id' => 12];
-        $expected = [$data, [$relations], null];
 
-        $this->methodWillReturnTrue('validate', $this->service);
-        $this->methodWillReturnArguments('getRelationForSaveAssociated', $this->service);
-        $this->methodWillReturnArguments('saveAssociated', $this->repository);
-        $this->assertEquals($expected, $this->service->createWithRelations($data, $relations));
+        $this->methodWillReturnTrue($this->service, 'validate');
+        $this->methodWillReturnTrue($this->service, 'getRelationForSaveAssociated', [$relations]);
+        $this->methodWillReturnTrue($this->repository, 'saveAssociated', [$data, true, null]);
+        $this->assertTrue($this->service->createWithRelations($data, $relations));
     }
 
     /**
@@ -167,7 +163,7 @@ class LaraServiceTest extends \TestCase
      */
     public function testFindForShow()
     {
-        $this->methodWillReturnTrue('findForShow', $this->repository);
+        $this->methodWillReturnTrue($this->repository, 'findForShow');
         $this->assertTrue($this->service->findForShow(1));
     }
 
@@ -176,7 +172,7 @@ class LaraServiceTest extends \TestCase
      */
     public function testFind()
     {
-        $this->methodWillReturnTrue('findFillable', $this->repository);
+        $this->methodWillReturnTrue($this->repository, 'findFillable');
         $this->assertTrue($this->service->find(1));
     }
 
@@ -186,7 +182,7 @@ class LaraServiceTest extends \TestCase
     public function testUpdate()
     {
         $service = $this->getMockLaraService(['updateWithRelations']);
-        $this->methodWillReturnTrue('updateWithRelations', $service);
+        $this->methodWillReturnTrue($service, 'updateWithRelations');
         $this->assertTrue($service->update(1, []));
     }
 
@@ -195,7 +191,7 @@ class LaraServiceTest extends \TestCase
      */
     public function testUpdateWithRelationsWhenValidateIsFalse()
     {
-        $this->methodWillReturn('id', 'getKeyName', $this->repository);
+        $this->methodWillReturn($this->repository, 'getKeyName', 'id');
         $this->assertFalse($this->service->updateWithRelations(1, [], []));
     }
 
@@ -204,8 +200,8 @@ class LaraServiceTest extends \TestCase
      */
     public function testUpdateWithRelationsWhenValidateIsTrue_WhenFindFillableIsFalse()
     {
-        $this->methodWillReturn('id', 'getKeyName', $this->repository);
-        $this->methodWillReturnTrue('validate', $this->service);
+        $this->methodWillReturn($this->repository, 'getKeyName', 'id');
+        $this->methodWillReturnTrue($this->service, 'validate');
         $this->assertFalse($this->service->updateWithRelations(1, [], []));
     }
 
@@ -217,19 +213,14 @@ class LaraServiceTest extends \TestCase
         $id = 1;
         $data = ['name' => 'name'];
         $relations = ['associated' => 'categories'];
-        $expected = [
-            array_merge($data, ['id' => $id]),
-            [$relations],
-            [$id]
-        ];
 
-        $this->methodWillReturn('id', 'getKeyName', $this->repository);
-        $this->methodWillReturnTrue('validate', $this->service);
-        $this->methodWillReturnArguments('findFillable', $this->repository);
-        $this->methodWillReturnArguments('saveAssociated', $this->repository);
-        $this->methodWillReturnArguments('getRelationForSaveAssociated', $this->service);
+        $this->methodWillReturn($this->repository, 'getKeyName', 'id');
+        $this->methodWillReturnTrue($this->service, 'validate');
+        $this->methodWillReturnTrue($this->repository, 'findFillable', $id);
+        $this->methodWillReturnTrue($this->service, 'getRelationForSaveAssociated', [$relations]);
+        $this->methodWillReturnTrue($this->repository, 'saveAssociated', [array_merge($data, ['id' => $id]), true, true]);
 
-        $this->assertEquals($expected, $this->service->updateWithRelations(1, $data, $relations));
+        $this->assertTrue($this->service->updateWithRelations(1, $data, $relations));
     }
 
     /**
@@ -237,7 +228,7 @@ class LaraServiceTest extends \TestCase
      */
     public function testDestroy()
     {
-        $this->methodWillReturnTrue('destroy', $this->repository);
+        $this->methodWillReturnTrue($this->repository, 'destroy');
         $this->assertTrue($this->service->destroy(1));
     }
 
@@ -247,7 +238,7 @@ class LaraServiceTest extends \TestCase
     public function testValidate_WhenIsValidIsFalse()
     {
         $service = new LaraService();
-        $this->methodWillReturnTrue('getErrors', $this->validator);
+        $this->methodWillReturnTrue($this->validator, 'getErrors');
 
         $this->assertFalse($service->validate($this->validator, []));
         $this->assertTrue($service->getValidationErrors());
@@ -259,7 +250,7 @@ class LaraServiceTest extends \TestCase
     public function testValidate_WhenIsValidIsTrue()
     {
         $service = new LaraService();
-        $this->methodWillReturnTrue('isValid', $this->validator);
+        $this->methodWillReturnTrue($this->validator, 'isValid');
         $this->assertTrue($service->validate($this->validator, []));
     }
 
@@ -285,7 +276,7 @@ class LaraServiceTest extends \TestCase
         $value = 'value';
 
         $service = $this->getMockLaraService(['paginateRepository']);
-        $this->methodWillReturnTrue('paginateRepository', $service);
+        $this->methodWillReturnTrue($service, 'paginateRepository');
         $this->assertTrue($service->paginateRepositoryWhere($this->repository, 'list', $attribute, $value));
     }
 
@@ -295,7 +286,7 @@ class LaraServiceTest extends \TestCase
     public function testPaginateRepositoryWhere_WhenEmpty_Column_OR_Val()
     {
         $service = $this->getMockLaraService(['paginateRepository']);
-        $this->methodWillReturnTrue('paginateRepository', $service);
+        $this->methodWillReturnTrue($service, 'paginateRepository');
         $this->assertTrue($service->paginateRepositoryWhere($this->repository));
     }
 
@@ -304,22 +295,9 @@ class LaraServiceTest extends \TestCase
      */
     public function testPaginateRepository()
     {
-       $expected = [
-           [
-               20,
-               null,
-               'list'
-           ],
-           [
-               true,
-               false,
-               'list'
-           ],
-       ];
-
-        $this->methodWillReturnArguments('getIndexableColumns', $this->repository);
-        $this->methodWillReturnArguments('paginate', $this->repository);
-        $this->assertEquals($expected, $this->service->paginateRepository($this->repository));
+        $this->methodWillReturnTrue($this->repository, 'getIndexableColumns', [20, null, 'list']);
+        $this->methodWillReturnTrue($this->repository, 'paginate', [true, false, 'list']);
+        $this->assertEquals([true, true], $this->service->paginateRepository($this->repository));
     }
 
     /**
@@ -337,6 +315,8 @@ class LaraServiceTest extends \TestCase
      */
     public function testSetSortingOptionsWhenOptionsIsEmpty()
     {
+        //TODO
+        $this->assertTrue(true);
 //        $options = [
 //            'column' => 'column',
 //            'order' => 'order'
@@ -374,7 +354,7 @@ class LaraServiceTest extends \TestCase
         ];
 
         $service = new LaraService();
-        $this->assertNull($this->invokeMethod($service, 'setSortingOptions', [$this->repository, $options]));
+        $this->assertNull($this->callProtectedMethod($service, 'setSortingOptions', [$this->repository, $options]));
     }
 
     /**
@@ -389,7 +369,7 @@ class LaraServiceTest extends \TestCase
 
         $service = new LaraService();
         $this->expectCallMethodWithArgument($this->repository, 'setSortingOptions', [$options['column'], $options['order'], 'list']);
-        $this->invokeMethod($service, 'setSortingOptions', [$this->repository, $options]);
+        $this->callProtectedMethod($service, 'setSortingOptions', [$this->repository, $options]);
     }
 
     /**
@@ -401,7 +381,7 @@ class LaraServiceTest extends \TestCase
         $expected = ['associated' => [$data]];
 
         $service = new LaraService();
-        $this->assertEquals($expected, $this->invokeMethod($service, 'getRelationForSaveAssociated', [$data]));
+        $this->assertEquals($expected, $this->callProtectedMethod($service, 'getRelationForSaveAssociated', [$data]));
     }
 
     /**
@@ -413,7 +393,7 @@ class LaraServiceTest extends \TestCase
         $expected = ['associated' => $data];
 
         $service = new LaraService();
-        $this->assertEquals($expected, $this->invokeMethod($service, 'getRelationForSaveAssociated', [$data]));
+        $this->assertEquals($expected, $this->callProtectedMethod($service, 'getRelationForSaveAssociated', [$data]));
     }
 
     /**
@@ -424,7 +404,7 @@ class LaraServiceTest extends \TestCase
         $data = [];
 
         $service = new LaraService();
-        $this->assertEquals([], $this->invokeMethod($service, 'getRelationForSaveAssociated', [$data]));
+        $this->assertEquals([], $this->callProtectedMethod($service, 'getRelationForSaveAssociated', [$data]));
     }
 
     /**
