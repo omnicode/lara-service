@@ -18,7 +18,9 @@
 		"php-mock/php-mock": "1.0.1"
 	},
 	"suggest": {
-		"omnicode/lara-repo": "Lara Service integrated with LaraRepo"
+		"omnicode/lara-crud": "LaraService integrated with LaraCrud",
+		"omnicode/lara-repo": "LaraService integrated with LaraRepo",
+		"omnicode/lara-model": "LaraService integrated with LaraModel",
 	},
 	"autoload": {
 		"psr-4": {
