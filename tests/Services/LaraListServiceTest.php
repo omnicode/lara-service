@@ -7,8 +7,9 @@ use LaraRepo\Contracts\RepositoryInterface;
 use LaraService\Services\LaraListService;
 use LaraTest\Traits\AccessProtectedTraits;
 use LaraTest\Traits\MockTraits;
+use Tests\TestCase;
 
-class LaraListServiceTest extends \TestCase
+class LaraListServiceTest extends TestCase
 {
     use MockTraits, AccessProtectedTraits;
 
@@ -40,7 +41,7 @@ class LaraListServiceTest extends \TestCase
      */
     public function testFindListWhenRepositoryIsNotString()
     {
-        $this->methodWillReturnTrue('findListBased', $this->service);
+        $this->methodWillReturnTrue($this->service, 'findListBased');
         $this->assertTrue($this->service->findList('RepositoryInterface'));
     }
 
@@ -48,7 +49,7 @@ class LaraListServiceTest extends \TestCase
      *
      */
     public function testFindListWhenRepositoryIsString() {
-        $this->service->expects($this->any())->method('findListBased')->willReturn(true);
+        $this->methodWillReturnTrue($this->service, 'findListBased', [], 'any');
         $this->assertEquals([true, true], $this->service->findList(['RepositoryInterfaceOne', 'RepositoryInterfaceTwo']));
     }
 
@@ -61,10 +62,13 @@ class LaraListServiceTest extends \TestCase
 
         $service = new LaraListService();
         $object = $this->getMockObjectWithMockedMethods(['findList']);
-        $this->methodWillReturnTrue('findList', $object);
-        App::shouldReceive('make')->withArgs([$repository])->andReturn($object);
+        $this->methodWillReturnTrue($object, 'findList');
+        App::shouldReceive('make')
+            ->once()
+            ->with($repository)
+            ->andReturn($object);
 
-        $this->assertTrue($this->invokeMethod($service, 'findListBased', [$repository]));
+        $this->assertTrue($this->callProtectedMethod($service, 'findListBased', [$repository]));
     }
 
 }
