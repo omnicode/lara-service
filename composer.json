@@ -20,7 +20,7 @@
 	"suggest": {
 		"omnicode/lara-crud": "LaraService integrated with LaraCrud",
 		"omnicode/lara-repo": "LaraService integrated with LaraRepo",
-		"omnicode/lara-model": "LaraService integrated with LaraModel",
+		"omnicode/lara-model": "LaraService integrated with LaraModel"
 	},
 	"autoload": {
 		"psr-4": {
