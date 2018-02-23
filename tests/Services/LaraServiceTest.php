@@ -8,7 +8,6 @@ use LaraService\Services\LaraService;
 use LaraTest\Traits\AccessProtectedTraits;
 use LaraTest\Traits\AssertionTraits;
 use LaraTest\Traits\MockTraits;
-use LaraValidation\LaraValidator;
 use phpmock\MockBuilder;
 use Tests\TestCase;
 
@@ -42,12 +41,12 @@ class LaraServiceTest extends TestCase
             [],
             ['pushCriteria']
         );
-        $this->validator = $this->getMockValidator(LaraValidator::class, ['isValid', 'getErrors']);
+        $this->validator = $this->getMockObjectWithMockedMethods(['isValid', 'getErrors']);
         $this->service = $this->getMockLaraService(['validate', 'getRelationForSaveAssociated']);
         $this->service->setBaseRepository($this->repository);
         $this->service->setBaseValidator($this->validator);
     }
-
+    
     /**
      *
      */
