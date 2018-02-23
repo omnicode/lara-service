@@ -1,6 +1,6 @@
 <?php
 
-namespace Test\Services;
+namespace Tests\Services;
 
 use LaraRepo\Contracts\RepositoryInterface;
 use LaraRepo\Criteria\Where\WhereCriteria;
