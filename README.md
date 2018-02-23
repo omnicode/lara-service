@@ -1,4 +1,4 @@
-# lara-Service
+# Lara-Service
 
 Generalized Service layer
 
