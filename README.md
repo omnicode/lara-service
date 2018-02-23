@@ -1,5 +1,12 @@
 # Lara-Service
 
+<p align="center">
+<a href="https://travis-ci.org/omnicode/lara-service"><img src="https://travis-ci.org/omnicode/lara-service.svg" alt="Build Status"></a>
+<a href="https://packagist.org/packages/omnicode/lara-service"><img src="https://poser.pugx.org/omnicode/lara-service/d/total.svg" alt="Total Downloads"></a>
+<a href="https://packagist.org/packages/omnicode/lara-service"><img src="https://poser.pugx.org/omnicode/lara-service/v/stable.svg" alt="Latest Stable Version"></a>
+<a href="https://packagist.org/packages/omnicode/lara-service"><img src="https://poser.pugx.org/omnicode/lara-service/license.svg" alt="License"></a>
+</p>
+
 Generalized Service layer
 
 ## Installation
