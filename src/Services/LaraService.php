@@ -83,6 +83,8 @@ class LaraService
     {
         if (!empty($sort)) {
             $this->baseRepository->pushCriteria(new SortCriteria($sort));
+        } else {
+            $this->setSortingOptions($this->baseRepository);
         }
 
         return $this->paginateRepository($this->baseRepository, $group);
